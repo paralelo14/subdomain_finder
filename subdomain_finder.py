@@ -1,6 +1,10 @@
 """
+Find subdomains using brute force.
+There is the option of running automatic scan using nmap - to discover operating systems, we recommend running as administrator or root.
+
+
 Usage:
-    subdomain_finder.py --target=<arg> --wordlist=<arg> [--threads=<arg> --scan --uniq-ip]
+    subdomain_finder.py --target=<arg> --wordlist=<arg> [--threads=<arg>  --scan  --scan-ports=<arg>  --scan-options=<arg>  --uniq-ip]
     subdomain_finder.py --help
     subdomain_finder.py --version
 
@@ -15,6 +19,8 @@ Required options:
 Optional options:
     --threads=number of subdomais      how many subdomais test for threads [default: 100]
     --scan                             scan subdomains (nmap)
+    --scan-ports='20-443'                ports
+    --scan-options='-Pn -T5 -A'      scan option style nmap [default: '-Pn -T5 -A']
     --uniq-ip                          show list ips
 
 """
@@ -29,13 +35,13 @@ import sys
 from docopt import docopt, DocoptExit
 
 
-
 class myScan(threading.Thread):
 
-    def __init__(self, target='localhost', param='', dict_domains={}):
+    def __init__(self, target='localhost', ports="20-1024", options="-Pn -T5 -A", dict_domains={}):
         threading.Thread.__init__(self)
         self.target = target
-        self.param = param
+        self.options = options
+        self.port = ports
         self.dict_domains = dict_domains
     
     def run(self):
@@ -50,28 +56,47 @@ class myScan(threading.Thread):
         except:
             print("SCAN: Unexpected error:", sys.exc_info()[0])
             sys.exit(0)
-        
-        scan_dict=nm.scan(self.target, self.param, arguments='-Pn -A')
+
+        scan_dict = nm.scan(self.target, ports=self.port, arguments=self.options)
         print("##############################")
-        print("REPORT SCAN:")
+        print("REPORT SCAN: ")
         print("    IP: "+self.target)
+        #print(scan_dict)
+        # List other sub domains of target
         print("    OTHER SUB DOMAINS:")
         for domain, ip in self.dict_domains.items():
             if ip == self.target:
                 print("           "+domain)
 
+        # OS details
         try:
                 for osmatch in nm[self.target]['osmatch']:
                     print('     OS:{0} - {1}%'.format(osmatch['name'], osmatch['accuracy']))
-                    print('           OsClass.type : {0}'.format(osmatch['osclass'][0]['type']))
-                    print('           OsClass.vendor : {0}'.format(osmatch['osclass'][0]['vendor']))
-                    print('           OsClass.osfamily : {0}'.format(osmatch['osclass'][0]['osfamily']))
-                    print('           OsClass.osgen : {0}'.format(osmatch['osclass'][0]['osgen']))
-                    #print('           OsClass.accuracy : {0}%'.format(osmatch['osclass'][0]['accuracy']))
+                    print('           OsClass: {0}|{1}|{2}|{3}|{4}|{5}%'.format(
+                                                           osmatch['osclass'][0]['type'],
+                                                           osmatch['osclass'][0]['vendor'],
+                                                           osmatch['osclass'][0]['osfamily'],
+                                                           osmatch['osclass'][0]['osgen'],
+                                                           osmatch['osclass'][0]['osgen'])
+                         )
+
                      
         except:
             pass
 
+        # TODO: port details, services, etc...
+        try:
+            for proto in nm[self.target].all_protocols():
+                print('        -----PORTS-----')
+                print('        Protocol : %s' % proto)
+
+                lport = list(nm[self.target][proto].keys())
+                lport.sort()
+                for port in lport:
+                    print('        PORT : %s\tSTATE : %s' % (port, nm[self.target][proto][port]['state']))
+
+        except:
+            pass
 
 
 
@@ -127,12 +152,12 @@ def subdomain_finder(threads, wordlist, target):
     return dict_domain
 
 
-def ip_scan(domains_ips):
+def ip_scan(domains_ips, ports, options):
 
     print('\n  SCAN... wait!')
     threads_scan = []
     for ip in ip_uniq(domains_ips):
-        scan = myScan(ip, "0-65535", domains_ips)
+        scan = myScan(ip, ports, options, domains_ips)
         scan.start()
         threads_scan.append(scan)
 
@@ -170,6 +195,8 @@ def main():
         wordlist = arguments['--wordlist']
         threads = arguments['--threads']
         opt_scan = arguments['--scan']
+        opt_scan_ports = arguments['--scan-ports']
+        opt_scan_options = arguments['--scan-options']
         opt_uniq_ips = arguments['--uniq-ip']
 
     except DocoptExit as e:
@@ -188,7 +215,7 @@ def main():
             print("        "+ip)
 
     if opt_scan:
-        ip_scan(domains_ips)
+        ip_scan(domains_ips, opt_scan_ports, opt_scan_options)
 
 if __name__ == '__main__':
     main()
