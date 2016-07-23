@@ -1,10 +1,19 @@
 # subdomain_finder
-Python script to find subdomains
+Python script to find subdomains and scans all found IPs
 
-- (i think) only dep is docopt, so make sure you install with pip3 (the script is for python3)
-- pip3 install docopt
+- DEPENDENCIES:
+Python3, pip3 and nmap
 
-obs: if you don't set threads, the default is 50.
+- INSTALL
+You install with pip3 (the script is for python3):
+pip3 install -r requirements.txt
 
-ex usage:
-$ python3 subdomain_finder.py --target='globo.com' --wordlist='wordlist.txt' --threads=150
+- EXAMPLE USAGE:
+$ python3 subdomain_finder.py --target='target.com' --wordlist='wordlist.txt' --threads=150
+
+
+
+OBS.1: This script does not leave anonymous
+
+OBS.2: Option  "threads" indicates how many fields will be tested by thread
+
