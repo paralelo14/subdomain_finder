@@ -13,7 +13,7 @@ Required options:
     --wordlist='list for brute force'  your favorite list of subdomains
 
 Optional options:
-    --threads=number of subdomais      how many subdomais test for threads
+    --threads=number of subdomais      how many subdomais test for threads [default: 100]
 
 """
 import threading
@@ -167,8 +167,7 @@ def main():
     # Converting wordlist file to list
     wlist = [line.rstrip('\n')+'.'+target for line in open(wordlist)]
     
-    # number of targets per thread
-    len_chuck=10
+    len_chuck = int(threads)
     # chunks of wordlist
     chunks = [wlist[x:x+len_chuck] for x in range(0, len(wlist), len_chuck)]
 
@@ -187,8 +186,6 @@ def main():
             for domain,ip in tw.join().items():
                 dict_domain[domain]=ip
                 
-    for curr in db.all('id'):
-        print(curr)
 
     print ("\n  IPs:")
     ips = {}
