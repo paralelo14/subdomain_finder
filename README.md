@@ -14,5 +14,6 @@ $ python3 subdomain_finder.py --target='target.com' --wordlist='wordlist.txt' --
 
 
 OBS.1: This script does not leave anonymous
+
 OBS.2: Option  "threads" indicates how many fields will be tested by thread
 
