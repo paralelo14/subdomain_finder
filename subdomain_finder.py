@@ -152,7 +152,6 @@ def banner():
         print("\t             Third World Attacker\n")
 
 def main():
-    # TODO: args...
     try:
         arguments = docopt(__doc__, version="TWA Corp. SubDomain Finder - 2016")
         target = arguments['--target']
@@ -163,9 +162,6 @@ def main():
         banner()
         os.system('python3 subdomain_finder.py --help')
         sys.exit(1)
-
-    #target='globalweb.com.br'
-    #wordlist='subdoamins8.txt'
 
 
     # Converting wordlist file to list
@@ -191,6 +187,8 @@ def main():
             for domain,ip in tw.join().items():
                 dict_domain[domain]=ip
                 
+    for curr in db.all('id'):
+        print(curr)
 
     print ("\n  IPs:")
     ips = {}
