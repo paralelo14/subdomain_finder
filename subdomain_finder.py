@@ -5,7 +5,7 @@ There is the option of running automatic scan using nmap - to discover operating
 
 
 Usage:
-    subdomain_finder.py --target=<arg> --wordlist=<arg> [--threads=<arg>  --whois --scan  --scan-ports=<arg>  --scan-options=<arg>  --uniq-ip]
+    subdomain_finder.py --target=<arg> [--wordlist=<arg> --threads=<arg>  --whois --scan  --scan-ports=<arg>  --scan-options=<arg>  --uniq-ip]
     subdomain_finder.py --help
     subdomain_finder.py --version
 
@@ -15,9 +15,9 @@ Options:
 
 Required options:
     --target='domain'                  your target =)
-    --wordlist='list for brute force'  your favorite list of subdomains
 
 Optional options:
+    --wordlist='list for brute force'  your favorite list of subdomains
     --threads=number of subdomais      how many subdomais test for threads [default: 100]
     --scan                             scan subdomains (nmap)
     --whois                            get "whois" information
@@ -126,6 +126,9 @@ def main():
     if opt_whois:
         domain_whois(target)
         banner()
+
+    if not wordlist:
+        wordlist = "data\wordlist.txt"
 
     domains_ips={}
     domains_ips = subdomain_finder(threads, wordlist, target)
