@@ -13,7 +13,7 @@ class ThScan(threading.Thread):
         self.target = target
         self.options = options
         self.port = ports
-        self.dct_domains = dict_domains
+        self.dict_domains = dict_domains
 
     def run(self):
         self.scan()

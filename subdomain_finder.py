@@ -27,12 +27,12 @@ Optional options:
 
 """
 
-
-import whois
 import os
 import sys
+
 from docopt import docopt, DocoptExit
 
+from lib import whois
 from utils import scan_host, subdomain
 
 
