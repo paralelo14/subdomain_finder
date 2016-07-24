@@ -32,82 +32,15 @@ import sys
 
 from docopt import docopt, DocoptExit
 
-from lib import whois
-from utils import scan_host, subdomain
+from utils import cli, subdomain_finder
 
 
-def subdomain_finder(threads, wordlist, target):
-
-    # Converting wordlist file to list
-    wlist = [line.rstrip('\n')+'.'+target for line in open(wordlist)]
-
-    len_chuck = int(threads)
-    # chunks of wordlist
-    chunks = [wlist[x:x+len_chuck] for x in range(0, len(wlist), len_chuck)]
-
-    # start threads
-    threads_domain = []
-
-    for chunk in chunks:
-        t = subdomain.ThSubdomain(chunk)
-        t.start()
-        threads_domain.append(t)
-
-    dict_domain = {}
-    for tw in threads_domain:
-        if len(tw.join()) > 0:
-            for domain, ip in tw.join().items():
-                dict_domain[domain] = ip
-
-    return dict_domain
 
 
-def ip_scan(domains_ips, ports, options):
-
-    print('\n  SCAN... wait!')
-    threads_scan = []
-    for ip in ip_uniq(domains_ips):
-        scan = scan_host.ThScan(ip, ports, options, domains_ips)
-        scan.start()
-        threads_scan.append(scan)
-
-    for ts in threads_scan:
-        ts.join()
-
-
-def ip_uniq(domains_ips):
-
-    ips = {}
-    for a, e in domains_ips.items():
-        ips[e] = 1
-
-    return ips
-
-def domain_whois(target):
-    try:
-        details = whois.whois(target)
-        print(details)
-    except:
-        print("WHOIS: Error!", sys.exc_info()[1])
-
-
-def banner():
-        os.system('clear')
-        print("\n")
-        print("\033[32m\tMMP\"\"MM\"\"YMM `7MMF'     A     `7MF' db\"")
-        print("\033[32m\tP'   MM   `7   `MA     ,MA     ,V  ;MM:     ")
-        print("\033[33m\t     MM         VM:   ,VVM:   ,V  ,V^MM.    ")
-        print("\033[33m\t     MM          MM.  M' MM.  M' ,M  `MM    ")
-        print("\033[33m\t     MM          `MM A'  `MM A'  AbmmmqMA   ")
-        print("\033[31m\t     MM           :MM;    :MM;  A'     VML  ")
-        print("\033[31m\t   .JMML.          VF      VF .AMA.   .AMMA.\033[39m")
-        print("\t\tTWA Corp. sub domain finder")
-        print("\t           Use with NO moderation :D")
-        print("\t             Third World Attacker\n")
 
 def main():
     try:
-        banner()
+        cli.banner()
         arguments = docopt(__doc__, version="TWA Corp. SubDomain Finder - 2016")
         target = arguments['--target']
         wordlist = arguments['--wordlist']
@@ -119,32 +52,33 @@ def main():
         opt_uniq_ips = arguments['--uniq-ip']
 
     except DocoptExit as e:
-        banner()
+        cli.banner()
         os.system('python3 subdomain_finder.py --help')
         sys.exit(1)
-
-    if opt_whois:
-        domain_whois(target)
-        banner()
 
     if not wordlist:
         wordlist = os.path.join(os.getcwd(), os.path.dirname(__file__), 'data', 'wordlist.txt')
 
     try:
-        domains_ips = subdomain_finder(threads, wordlist, target)
+        domains_ips = subdomain_finder.finder(threads, wordlist, target)
     except:
         print("Wordlist {0} ERROR: {1}".format(wordlist, sys.exc_info()[1]))
         exit(0)
 
     if opt_uniq_ips:
         print("\n  IPs:")
-        ips = ip_uniq(domains_ips)
+        ips = subdomain_finder.ip_uniq(domains_ips)
         print("    Uniq: "+str(len(ips)))
-        for ip in ip_uniq(domains_ips):
+        for ip in subdomain_finder.ip_uniq(domains_ips):
             print("        "+ip)
 
     if opt_scan:
-        ip_scan(domains_ips, opt_scan_ports, opt_scan_options)
+        subdomain_finder.ip_scan(domains_ips, opt_scan_ports, opt_scan_options)
+
+    if opt_whois:
+        subdomain_finder.domain_whois(target)
+        cli.banner()
+
 
 if __name__ == '__main__':
     main()

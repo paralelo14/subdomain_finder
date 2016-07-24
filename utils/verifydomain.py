@@ -5,7 +5,7 @@ import socket
 __author__ = 'contato318'
 
 
-class ThSubdomain (threading.Thread):
+class ThDomain (threading.Thread):
 
     def __init__(self, bDomain):
         threading.Thread.__init__(self)
