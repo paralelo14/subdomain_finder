@@ -1,10 +1,11 @@
+# -*- coding: utf-8 -*-
 """
 Find subdomains using brute force.
 There is the option of running automatic scan using nmap - to discover operating systems, we recommend running as administrator or root.
 
 
 Usage:
-    subdomain_finder.py --target=<arg> --wordlist=<arg> [--threads=<arg>  --scan  --scan-ports=<arg>  --scan-options=<arg>  --uniq-ip]
+    subdomain_finder.py --target=<arg> --wordlist=<arg> [--threads=<arg>  --whois --scan  --scan-ports=<arg>  --scan-options=<arg>  --uniq-ip]
     subdomain_finder.py --help
     subdomain_finder.py --version
 
@@ -19,112 +20,20 @@ Required options:
 Optional options:
     --threads=number of subdomais      how many subdomais test for threads [default: 100]
     --scan                             scan subdomains (nmap)
-    --scan-ports='20-443'                ports
-    --scan-options='-Pn -T5 -A'      scan option style nmap [default: '-Pn -T5 -A']
+    --whois                            get "whois" information
+    --scan-ports='20-443'              ports
+    --scan-options='-Pn -T5 -A'        scan option style nmap [default: '-Pn -T5 -A']
     --uniq-ip                          show list ips
 
 """
 
-import threading
-import socket
 
-import nmap
-
+import whois
 import os
 import sys
 from docopt import docopt, DocoptExit
 
-
-class myScan(threading.Thread):
-
-    def __init__(self, target='localhost', ports="20-1024", options="-Pn -T5 -A", dict_domains={}):
-        threading.Thread.__init__(self)
-        self.target = target
-        self.options = options
-        self.port = ports
-        self.dict_domains = dict_domains
-    
-    def run(self):
-        self.scan()
-
-    def scan(self):
-        try:
-           nm = nmap.PortScanner()         # instantiate nmap.PortScanner object
-        except nmap.PortScannerError:
-            print('SCAN: Nmap not found', sys.exc_info()[0])
-            sys.exit(0)
-        except:
-            print("SCAN: Unexpected error:", sys.exc_info()[0])
-            sys.exit(0)
-
-        scan_dict = nm.scan(self.target, ports=self.port, arguments=self.options)
-        print("##############################")
-        print("REPORT SCAN: ")
-        print("    IP: "+self.target)
-        #print(scan_dict)
-        # List other sub domains of target
-        print("    OTHER SUB DOMAINS:")
-        for domain, ip in self.dict_domains.items():
-            if ip == self.target:
-                print("           "+domain)
-
-        # OS details
-        try:
-                for osmatch in nm[self.target]['osmatch']:
-                    print('     OS:{0} - {1}%'.format(osmatch['name'], osmatch['accuracy']))
-                    print('           OsClass: {0}|{1}|{2}|{3}|{4}|{5}%'.format(
-                                                           osmatch['osclass'][0]['type'],
-                                                           osmatch['osclass'][0]['vendor'],
-                                                           osmatch['osclass'][0]['osfamily'],
-                                                           osmatch['osclass'][0]['osgen'],
-                                                           osmatch['osclass'][0]['osgen'])
-                         )
-
-                     
-        except:
-            pass
-
-        # TODO: port details, services, etc...
-        try:
-            for proto in nm[self.target].all_protocols():
-                print('        -----PORTS-----')
-                print('        Protocol : %s' % proto)
-
-                lport = list(nm[self.target][proto].keys())
-                lport.sort()
-                for port in lport:
-                    print('        PORT : %s\tSTATE : %s' % (port, nm[self.target][proto][port]['state']))
-
-        except:
-            pass
-
-
-
-class myTestDomain (threading.Thread):
-    def __init__(self, bDomain):
-        threading.Thread.__init__(self)
-        self.bDomain = bDomain
-        self.dict_return = {}
-    
-    def run(self):
-        for domain in self.bDomain:
-            temp = self.finder(domain)
-            if temp is not None:
-                self.dict_return[domain] = temp
-    
-    def join(self):
-        threading.Thread.join(self)
-        return self.dict_return
-
-    def finder(self, target):
-            try:
-                ip = socket.gethostbyname(target)
-                if ip: 
-                        print("{0:65s} - {1}".format(target, ip))
-                        return ip
-            except:
-                        pass
-
+from utils import scan_host, subdomain
 
 
 def subdomain_finder(threads, wordlist, target):
@@ -138,8 +47,9 @@ def subdomain_finder(threads, wordlist, target):
 
     # start threads
     threads_domain = []
+
     for chunk in chunks:
-        t=myTestDomain(chunk)
+        t = subdomain.ThSubdomain(chunk)
         t.start()
         threads_domain.append(t)
 
@@ -157,7 +67,7 @@ def ip_scan(domains_ips, ports, options):
     print('\n  SCAN... wait!')
     threads_scan = []
     for ip in ip_uniq(domains_ips):
-        scan = myScan(ip, ports, options, domains_ips)
+        scan = scan_host.ThScan(ip, ports, options, domains_ips)
         scan.start()
         threads_scan.append(scan)
 
@@ -172,6 +82,14 @@ def ip_uniq(domains_ips):
         ips[e] = 1
 
     return ips
+
+def domain_whois(target):
+    try:
+        details = whois.whois(target)
+        print(details)
+    except:
+        print("WHOIS: Error!", sys.exc_info()[0])
+
 
 def banner():
         os.system('clear')
@@ -195,6 +113,7 @@ def main():
         wordlist = arguments['--wordlist']
         threads = arguments['--threads']
         opt_scan = arguments['--scan']
+        opt_whois = arguments['--whois']
         opt_scan_ports = arguments['--scan-ports']
         opt_scan_options = arguments['--scan-options']
         opt_uniq_ips = arguments['--uniq-ip']
@@ -203,6 +122,10 @@ def main():
         banner()
         os.system('python3 subdomain_finder.py --help')
         sys.exit(1)
+
+    if opt_whois:
+        domain_whois(target)
+        banner()
 
     domains_ips={}
     domains_ips = subdomain_finder(threads, wordlist, target)

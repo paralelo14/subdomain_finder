@@ -1,2 +1,4 @@
 docopt==0.6.2
 python_nmap==0.6.0
+python_whois==0.6.2
+whois==0.7
