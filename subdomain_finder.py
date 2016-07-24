@@ -88,7 +88,7 @@ def domain_whois(target):
         details = whois.whois(target)
         print(details)
     except:
-        print("WHOIS: Error!", sys.exc_info()[0])
+        print("WHOIS: Error!", sys.exc_info()[1])
 
 
 def banner():
@@ -128,10 +128,13 @@ def main():
         banner()
 
     if not wordlist:
-        wordlist = "data\wordlist.txt"
+        wordlist = os.path.join(os.getcwd(), os.path.dirname(__file__), 'data', 'wordlist.txt')
 
-    domains_ips={}
-    domains_ips = subdomain_finder(threads, wordlist, target)
+    try:
+        domains_ips = subdomain_finder(threads, wordlist, target)
+    except:
+        print("Wordlist {0} ERROR: {1}".format(wordlist, sys.exc_info()[1]))
+        exit(0)
 
     if opt_uniq_ips:
         print("\n  IPs:")
