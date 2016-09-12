@@ -18,7 +18,7 @@ Required options:
 
 Optional options:
     --wordlist='list for brute force'  your favorite list of subdomains
-    --threads=number of subdomais      how many subdomais test for threads [default: 100]
+    --threads=number of subdomais      how many subdomais test for threads [default: 275]
     --scan                             scan subdomains (nmap)
     --whois                            get "whois" information
     --scan-ports='20-443'              ports
