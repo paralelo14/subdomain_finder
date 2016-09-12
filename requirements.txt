@@ -1,2 +1,4 @@
 docopt==0.6.2
+future==0.15.2
 python_nmap==0.6.0
+python_dateutil==2.5.3
